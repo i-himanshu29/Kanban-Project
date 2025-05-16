@@ -1,35 +1,44 @@
-
+import mongoose from "mongoose";
 import { ProjectNote } from "../models/note.model.js";
 import { ApiError } from "../utils/api-error.js";
 import { ApiResponse } from "../utils/api-response.js";
-import { asyncHandler } from "../utils/async-handler";
-
-
+import { asyncHandler } from "../utils/async-handler.js";
+import { Project } from "../models/project.model.js";
 
 // get notes .....................................................
 const getNotes = asyncHandler(async (req, res) => {
-  // Get the user ID 
-  const userId = req.user.id;
+  const { projectId } = req.params;
 
-  // Fetch notes created by the user
-  const notes = await ProjectNote.find({ createdBy: userId });
+  const project = await Project.findById(projectId); // project->mongoose
 
-  // If no notes are found, throw a 404 error
-  if (!notes || notes.length === 0) {
+  if (!project) {
+    throw new ApiError(404, "Project not found");
+  }
+
+  const notes = await ProjectNote.find({
+    project: new mongoose.Types.ObjectId(projectId),
+  }).populate("createdBy", "username fullName avatar");
+
+  // If no notes are found, throw a 404 errro
+  if (!notes) {
     throw new ApiError(404, "No notes found for the current user.");
   }
 
   // Return the fetched notes in the response
-  res.status(200).json(new ApiResponse(200, "Notes fetched successfully.", notes));
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Notes fetched successfully.", notes));
 });
 
-
 // get note by id.................................................
-const getNoteById = async (req, res) => {
-  const { id } = req.params;
+const getNoteById = asyncHandler(async (req, res) => {
+  const { noteId } = req.params;
 
   // Fetch the note by ID
-  const note = await ProjectNote.findById(id);
+  const note = await ProjectNote.findById(noteId).populate(
+    "createdBy",
+    "username fullName avatar",
+  );
 
   // If no note is found, throw an error
   if (!note) {
@@ -37,89 +46,78 @@ const getNoteById = async (req, res) => {
   }
 
   // Return the note in the response
-  res.status(200).json(new ApiResponse(200, "note fetched successfully.", note));
-};
-  
+  res
+    .status(200)
+    .json(new ApiResponse(200, note, "note fetched successfully."));
+});
 
 // create note ...................................................
 const createNote = asyncHandler(async (req, res) => {
-  const { project, content, createdBy } = req.body;
+  const { projectId } = req.params;
+  const { content } = req.body;
 
-  // Validate required fields
-  if (!project || !content || !createdBy) {
-    throw new ApiError(400, "All fields are required.");
+  const project = await Project.findById(projectId);
+
+  // If Project not found
+  if (!project) {
+    throw new ApiError(400, "Project not found.");
   }
 
-  // Check if a note with the same content already exists for the project
-  const existingNote = await ProjectNote.findOne({
-    project,
+  const note = await ProjectNote.create({
+    project: new mongoose.Types.ObjectId(projectId),
     content,
+    createdBy: new mongoose.Types.ObjectId(req.user._id),
   });
 
-  if (existingNote) {
-    throw new ApiError(409, "A note with the same content already exists for this project.");
-  }
-
-  // Create and save the note
-  const note = new ProjectNote({
-    project,
-    content,
-    createdBy,
-  });
-
-  await note.save();
+  const populatedNote = await ProjectNote.findById(note._id).populate(
+    "createdBy",
+    "username fullName avatar",
+  );
 
   // Return success response
-  res.status(201).json(new ApiResponse(201, "Note created successfully.", note));
+  res
+    .status(200)
+    .json(new ApiResponse(200, populatedNote, "Note created successfully."));
 });
 
-  
 // update note ...................................................
-const updateNote = async (req, res) => {
+const updateNote = asyncHandler(async (req, res) => {
+  const { noteId } = req.params;
 
-  const {id}= req.params;
+  const { content } = req.body;
 
-  const {project , content , createdBy} = req.body;
+  const existingNote = ProjectNote.findById(noteId);
 
-  if(!project || !content || !createdBy){
-    throw new ApiError(400,"All fileds are required");
+  // if note not exists
+  if (!existingNote) {
+    throw new ApiError(404, "Note not found");
   }
 
-  const note = await ProjectNote.findById(id);
+  const note = await ProjectNote.findByIdAndUpdate(
+    noteId,
+    { content },
+    { new: true },
+  ).populate("createBy", "username fullName avatar");
 
-  if(!note){
-    throw new ApiError(404,"Note not found")
-  }
-
-  // update the note
-  note.project = project;
-  note.content = content;
-  note.createdBy = createdBy;
-
-  await note.save();
-
-  // Return success response
-  res.status(200).json(new ApiResponse(200, "Note updated successfully.", note));
-};
-
+  res
+    .status(200)
+    .json(new ApiResponse(200, note, "Note updated successfully.", note));
+});
 
 // delete note ...................................................
 const deleteNote = asyncHandler(async (req, res) => {
-
-  const { id } = req.params;
+  const { noteId } = req.params;
 
   // Find and delete the note
-  const result = await ProjectNote.deleteOne({ _id: id });
+  const note = await ProjectNote.findByIdAndDelete(noteId);
 
-  // Check if the note was found and deleted
-  if (result.deletedCount === 0) {
+  // Check if the note was found
+  if (!note) {
     throw new ApiError(404, " Note not found");
   }
 
   // Return success response
-  res.status(200).json(new ApiResponse(200, "Note deleted successfully"));
+  res.status(200).json(new ApiResponse(200, note, "Note deleted successfully"));
 });
 
-  
 export { createNote, deleteNote, getNoteById, getNotes, updateNote };
-  

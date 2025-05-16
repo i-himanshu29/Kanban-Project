@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { verifyJWT } from "../middlewares/verifyJwt.middleware";
 import {
   createNote,
   deleteNote,
@@ -7,17 +6,21 @@ import {
   getNotes,
   updateNote,
 } from "../controllers/note.controllers";
+import { validateProjectPermission } from "../middlewares/validator.middleware.js";
+import { AvailableUseRole } from "../utils/constants.js ";
+
 
 const router = Router();
 
-router.route("/create").post(verifyJWT, createNote); // create a new note
+router
+  .route("/:projectId")
+  .get(validateProjectPermission(AvailableUseRole), getNotes)
+  .post(validateProjectPermission([UserRolesEnum.ADMIN]), createNote); //, UserRoleEnum.MEMBER
 
-router.route("/notes").get(verifyJWT, getNotes); // get all notes
-
-router.route("/notes/:id").get(verifyJWT, getNoteById); // get note by id
-
-router.route("/update/:id").put(verifyJWT, updateNote); // update note
-
-router.route("/delete/:id").delete(verifyJWT, deleteNote); //delete note
+router
+  .route("/:projectId/n/:noteId")
+  .get(validateProjectPermission(AvailableUseRole), getNoteById)
+  .put(validateProjectPermission([UserRolesEnum.ADMIN]), updateNote)
+  .delete(validateProjectPermission([UserRolesEnum.ADMIN]), deleteNote); // get note by id
 
 export default router;
