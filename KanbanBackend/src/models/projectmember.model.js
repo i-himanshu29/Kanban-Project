@@ -14,7 +14,7 @@ const projectMemberSchema = new Schema(
     },
     role: {
       type: String,
-      enum: AvailableUserRoles,
+      enum: AvailableUserRoles,//["","",""]
       default: UserRolesEnum.MEMBER,
     },
   },

@@ -1,5 +1,6 @@
 import { validationResult } from "express-validator";
 import { ApiError } from "../utils/api-error.js";
+import { asyncHandler } from "../utils/async-handler.js";
 import mongoose from "mongoose";
 
 export const validate = (req, res, next) => {

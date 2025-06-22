@@ -67,3 +67,25 @@ Bonus:
 - Custom 404 page
 - Easter eggs or thoughtful UX touches
 
+
+
+<!-- Delete -->
+{
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": false,
+  "jsxSingleQuote": false,
+  "trailingComma": "es5",
+  "arrowParens": "avoid",
+  "bracketSpacing": false,
+  "printWidth": 80,
+}
+
+
+Seeding in a database means adding sample or initial data into the database.
+
+FCP - First Containetfull Paint
+
+chaicode.com — origin.    /learn — path
+

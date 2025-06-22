@@ -9,8 +9,8 @@ import {
   getProjects,
   updateMemberRole,
   updateProject,
-} from "../controllers/project.controllers";
-import { verifyJWT } from "../middlewares/verifyJwt.middleware";
+} from "../controllers/project.controllers.js";
+import {verifyJWT}  from "../middlewares/verifyJwt.middleware.js";
 
 const router = Router();
 

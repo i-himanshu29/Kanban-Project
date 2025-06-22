@@ -34,7 +34,7 @@ router
     registerUser,
   );
 
-router.route("/login").get(userLoginValidator(), validate, loginUser);
+router.route("/login").get(userLoginValidator(), validate, loginUser);//factory pattern
 router.route("/verify/:token").get(verifyJWT, VerifyEmail);
 router.route("/resend-mail").get(verifyJWT, resendVerificationEmail);
 router.route("/refresh-token").post(refreshAccessToken);
